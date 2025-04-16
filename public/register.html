@@ -31,12 +31,12 @@
             const newUsername = document.getElementById('newUsername').value;
             const newPassword = document.getElementById('newPassword').value;
 
-            const response = await fetch('http://localhost:8000/register', {
+            const response = await fetch('https://website-production-7086.up.railway.app/register.html', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: newUsername, password: newPassword })
             });
-
+// :))
             const result = await response.json();
             const registerMessage = document.getElementById('registerMessage');
 
