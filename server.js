@@ -23,31 +23,14 @@ if (!process.env.JWT_SECRET) {
   process.exit(1);
 }
 
-// Kết nối MongoDB Atlas
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
-  useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 5000,  // Thời gian chờ server trả lời (5s)
-  socketTimeoutMS: 45000,          // Thời gian timeout của socket (45s)
-  autoReconnect: true,             // Tự động reconnect nếu mất kết nối
-  reconnectTries: Number.MAX_VALUE, // Số lần thử reconnect (∞)
-  reconnectInterval: 5000          // Thời gian chờ giữa các lần reconnect (5s)
+  useUnifiedTopology: true
 })
 .then(() => console.log('✅ Connected to MongoDB'))
 .catch(err => {
   console.error('❌ Error connecting to MongoDB:', err);
   process.exit(1);
-});
-
-// Lắng nghe sự kiện mất kết nối và thử lại
-mongoose.connection.on('disconnected', () => {
-  console.error('⚠️ MongoDB disconnected! Trying to reconnect...');
-  setTimeout(() => {
-    mongoose.connect(process.env.MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    }).catch(err => console.error('Reconnection failed:', err));
-  }, 5000);  // thử lại sau 5s
 });
 
 
