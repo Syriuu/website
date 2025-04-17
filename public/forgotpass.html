@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quên mật khẩu</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="stars"></div>
+<div class="container">
+    <h2>Quên mật khẩu</h2>
+    <form id="forgotForm">
+        <input type="email" id="email" placeholder="Nhập Email đã đăng ký" required>
+        <button type="submit">Gửi OTP</button>
+    </form>
+    <div id="forgotMessage"></div>
+    <p><a href="login.html">Quay lại đăng nhập</a></p>
+</div>
+
+<script>
+document.getElementById('forgotForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const email = document.getElementById('email').value;
+    const res = await fetch('/request-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+    });
+    const result = await res.json();
+    const msg = document.getElementById('forgotMessage');
+    if(res.ok){
+        msg.style.color = "green";
+        msg.textContent = "OTP đã được gửi đến Email. Vui lòng kiểm tra hộp thư!";
+    } else {
+        msg.style.color = "red";
+        msg.textContent = result.message;
+    }
+});
+</script>
+</body>
+</html>

@@ -1,48 +1,71 @@
 body {
     font-family: Arial, sans-serif;
     text-align: center;
-    background: linear-gradient(to bottom, #c9a7e8, #8c52ff); /* Your theme colors */
+    background: linear-gradient(to bottom, #c9a7e8, #8c52ff);
     color: black;
-    height: 100vh; /* Set body height to full viewport */
-    margin: 0; /* Remove default margin */
+    height: 100vh;
+    margin: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    position: relative;
 }
 
 .container {
     width: 350px;
-    background: rgba(255, 255, 255, 0.5); /* Light transparent purple */
-    padding: 20px;
-    border-radius: 15px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    background: rgba(255, 255, 255, 0.3);
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
     position: relative;
+    z-index: 1;
+}
+
+h2 {
+    margin-bottom: 10px;
+    color: #4b0082;
+    font-size: 28px;
+}
+
+p.subtitle {
+    margin-bottom: 20px;
+    color: #6a2bbf;
+    font-size: 14px;
 }
 
 input {
     display: block;
     width: 90%;
     margin: 10px auto;
-    padding: 10px;
+    padding: 12px;
     border: 1px solid #8c52ff;
-    background: white;
+    background: #f3e8ff;
     color: black;
-    border-radius: 5px;
+    border-radius: 8px;
     text-align: center;
+    font-size: 16px;
+    outline: none;
+}
+
+input::placeholder {
+    color: #8c52ff;
 }
 
 button {
     display: block;
     width: 95%;
-    margin: 10px auto;
-    padding: 10px;
+    margin: 15px auto;
+    padding: 12px;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
     background: #8c52ff;
     color: white;
     cursor: pointer;
     font-weight: bold;
+    font-size: 16px;
+    transition: background 0.3s;
 }
 
 button:hover {
@@ -53,6 +76,7 @@ a {
     color: #4b0082;
     text-decoration: none;
     font-weight: bold;
+    font-size: 14px;
 }
 
 a:hover {
@@ -66,6 +90,8 @@ a:hover {
     height: 100%;
     top: 0;
     left: 0;
+    pointer-events: none;
+    z-index: 0;
 }
 
 .star {
@@ -81,10 +107,12 @@ a:hover {
     50% { opacity: 1; }
     100% { opacity: 0.3; }
 }
+
+/* Form visibility */
 .form {
-    display: none; /* Hide all forms initially */
+    display: none;
 }
 
 .form.active {
-    display: block; /* Only show the active form */
+    display: block;
 }
