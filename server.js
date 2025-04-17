@@ -5,12 +5,11 @@ const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const path = require('path');
+const { sendMail } = require('./mailer');
 
 const app = express();
 app.use(express.json());
 app.use(cors());
-
-// Phục vụ file tĩnh từ thư mục public
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Kiểm tra biến môi trường
@@ -23,6 +22,7 @@ if (!process.env.JWT_SECRET) {
   process.exit(1);
 }
 
+// Kết nối MongoDB
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
@@ -33,6 +33,10 @@ mongoose.connect(process.env.MONGO_URI, {
   process.exit(1);
 });
 
+// Hàm tạo mã OTP 6 số
+function generateOTP() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
 
 // Định nghĩa schema user
 const userSchema = new mongoose.Schema({
@@ -42,26 +46,17 @@ const userSchema = new mongoose.Schema({
   otp: String,
   otpExpires: Date
 });
+
 const User = mongoose.model('User', userSchema);
 
-//thêm api forgot pass
-const nodemailer = require('nodemailer');
-
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,  // tài khoản email của bạn
-    pass: process.env.EMAIL_PASS   // app password (không phải mật khẩu Gmail!)
-  }
-});
-
+// Forgot password - Gửi OTP
 app.post('/request-otp', async (req, res) => {
   const { email } = req.body;
   const user = await User.findOne({ email });
 
   if (!user) return res.status(404).json({ message: 'Email không tồn tại!' });
 
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const otp = generateOTP();
   const expires = new Date(Date.now() + 10 * 60000); // OTP hết hạn sau 10 phút
 
   user.otp = otp;
@@ -69,18 +64,15 @@ app.post('/request-otp', async (req, res) => {
   await user.save();
 
   try {
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: 'Mã OTP đặt lại mật khẩu',
-      text: `Mã OTP của bạn là: ${otp}. OTP có hiệu lực trong 10 phút.`
-    });
+    await sendMail(email, 'Mã OTP đặt lại mật khẩu', `Mã OTP của bạn là: ${otp}. OTP có hiệu lực trong 10 phút.`);
     res.json({ message: 'OTP đã được gửi tới email!' });
   } catch (error) {
     console.error('❌ Lỗi gửi email:', error);
     res.status(500).json({ message: 'Không thể gửi email. Vui lòng thử lại sau.' });
   }  
 });
+
+// Reset password bằng OTP
 app.post('/reset-password', async (req, res) => {
   const { email, otp, newPassword } = req.body;
   const user = await User.findOne({ email });
@@ -156,7 +148,7 @@ app.get('/login', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'login.html')); // Trang mặc định là login
+  res.sendFile(path.join(__dirname, 'public', 'login.html')); // Trang mặc định
 });
 
 app.get('/forgot-password', (req, res) => {
@@ -172,4 +164,3 @@ const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
-
