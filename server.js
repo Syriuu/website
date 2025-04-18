@@ -6,12 +6,14 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const path = require('path');
 const { sendMail } = require('./mailer');
-
+const User = require('./models/User');
+const friendshipRoutes = require('./models/friendships');
 const app = express();
+
 app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
-
+app.use('/api/friends', friendshipRoutes);
 // Kiểm tra biến môi trường
 if (!process.env.MONGO_URI) {
   console.error("❌ MONGO_URI không được định nghĩa trong .env!");
@@ -37,17 +39,6 @@ mongoose.connect(process.env.MONGO_URI, {
 function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
-
-// Định nghĩa schema user
-const userSchema = new mongoose.Schema({
-  username: { type: String, unique: true, required: true },
-  email: { type: String, unique: true, required: true },
-  password: { type: String, required: true },
-  otp: String,
-  otpExpires: Date
-});
-
-const User = mongoose.model('User', userSchema);
 
 // Forgot password - Gửi OTP
 app.post('/request-otp', async (req, res) => {
@@ -158,6 +149,8 @@ app.get('/forgot-password', (req, res) => {
 app.get('/reset-password', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'reset-password.html'));
 });
+
+app.use('/api/friends', friendshipRoutes);
 
 // Chạy server
 const PORT = process.env.PORT || 8000;
