@@ -1,0 +1,90 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background: linear-gradient(to bottom, #c9a7e8, #8c52ff); /* Your theme colors */
+    color: black;
+    height: 100vh; /* Set body height to full viewport */
+    margin: 0; /* Remove default margin */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.container {
+    width: 350px;
+    background: rgba(255, 255, 255, 0.5); /* Light transparent purple */
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    position: relative;
+}
+
+input {
+    display: block;
+    width: 90%;
+    margin: 10px auto;
+    padding: 10px;
+    border: 1px solid #8c52ff;
+    background: white;
+    color: black;
+    border-radius: 5px;
+    text-align: center;
+}
+
+button {
+    display: block;
+    width: 95%;
+    margin: 10px auto;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    background: #8c52ff;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+button:hover {
+    background: #6a2bbf;
+}
+
+a {
+    color: #4b0082;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Starry background */
+.stars {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+}
+
+.star {
+    position: absolute;
+    background: white;
+    width: 2px;
+    height: 2px;
+    animation: twinkle 3s infinite;
+}
+
+@keyframes twinkle {
+    0% { opacity: 0.3; }
+    50% { opacity: 1; }
+    100% { opacity: 0.3; }
+}
+.form {
+    display: none; /* Hide all forms initially */
+}
+
+.form.active {
+    display: block; /* Only show the active form */
+}

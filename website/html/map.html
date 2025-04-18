@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="../css/map.css">
+        <script src="../js/map.js"></script>
+        <title></title>
+    </head>
+    <body>
+    <div class="container"> 
+        <p id="location"></p>
+        <iframe id='map' style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    </div>
+    <div class="menu-icon" onclick="toggleMenu(this)">
+      <span></span><span></span><span></span>
+    </div>
+    
+    <div class="vertical-blur" id="blurLayer"></div>
+
+    <div class="username" id="menu">
+      <div class="username-display" id="usernameDisplay">me</div>
+   </div> 
+
+    <div class="vertical-bar" id="iconBar">
+      <div class="circle-icon" onclick="toggleIconPicker()" id="userAvatar">😀</div>
+      <div class="circle-icon" onclick="toggleFriendPopup()">+</div>
+    </div>
+    
+    <div class="icon-picker" id="iconPicker">
+      <span onclick="changeAvatar('😀')">😀</span>
+      <span onclick="changeAvatar('🐤')">🐤</span>
+      <span onclick="changeAvatar('🚀')">🚀</span>
+      <span onclick="changeAvatar('🎮')">🎮</span>
+      <span onclick="changeAvatar('🏆')">🏆</span>
+      <span onclick="changeAvatar('🐻‍❄️')">🐻‍❄️</span>
+      <span onclick="changeAvatar('🐩')">🐩</span>
+      <span onclick="changeAvatar('🦁')">🦁</span>
+      <span onclick="changeAvatar('🐒')">🐒</span>
+      <span onclick="changeAvatar('🐲')">🐲</span>
+      <span onclick="changeAvatar('🪼')">🪼</span>
+      <span onclick="changeAvatar('🦙')">🦙</span>
+      <span onclick="changeAvatar('🐡')">🐡</span>
+      <span onclick="changeAvatar('🐖')">🐖</span>
+      <span onclick="changeAvatar('🦍')">🦍</span>
+      <span onclick="changeAvatar('🐺')">🐺</span>
+      <span onclick="changeAvatar('🦄')">🦄</span>
+      <span onclick="changeAvatar('🐰')">🐰</span>
+      <span onclick="changeAvatar('🦒')">🦒</span>
+    </div>
+    
+    <div class="friend-popup" id="friendPopup">
+      <input type="text" id="friendInput" placeholder="Friend's name">
+      <button onclick="addFriend(document.getElementById('friendInput').value.trim())">Add</button>
+    </div>
+    
+        <div class="vertical-blur"></div>
+        <script src="verticalBar.js"></script>
+
+
+  <script>
+    window.addEventListener("DOMContentLoaded", async () => {
+      const username = localStorage.getItem("username") || "me";
+      const avatar = localStorage.getItem("avatar") || "😀";
+
+      try {
+        const res = await fetch("http://localhost:5000/get_user", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ username })
+        });
+
+        const data = await res.json();
+
+        if (data.status === "success") {
+          document.getElementById("usernameDisplay").textContent = data.user.username;
+        } else {
+          document.getElementById("usernameDisplay").textContent = "(Unknown user)";
+        }
+      } catch (err) {
+        document.getElementById("usernameDisplay").textContent = "(Error)";
+        console.error("Error loading username:", err);
+      }
+
+      // Set avatar icon
+      document.getElementById("userAvatar").textContent = avatar;
+    });
+  </script>
+
+    </body>
+
+</html>
+
+
