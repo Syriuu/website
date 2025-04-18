@@ -41,10 +41,19 @@ function generateOTP() {
 }
 
 // Forgot password - Gửi OTP
+const otpCooldowns = {};
 app.post('/request-otp', async (req, res) => {
   const { email } = req.body;
-  const user = await User.findOne({ email });
 
+  // Kiểm tra cooldown
+  const now = Date.now();
+  const lastSent = otpCooldowns[email];
+  if (lastSent && now - lastSent < 60 * 1000) {
+    const secondsLeft = Math.ceil((60 * 1000 - (now - lastSent)) / 1000);
+    return res.status(429).json({ message: `Vui lòng đợi ${secondsLeft}s trước khi gửi lại OTP.` });
+  }
+
+  const user = await User.findOne({ email });
   if (!user) return res.status(404).json({ message: 'Email không tồn tại!' });
 
   const otp = generateOTP();
@@ -56,12 +65,15 @@ app.post('/request-otp', async (req, res) => {
 
   try {
     await sendMail(email, 'Mã OTP đặt lại mật khẩu', `Mã OTP của bạn là: ${otp}. OTP có hiệu lực trong 10 phút.`);
+    
+    otpCooldowns[email] = now; // Lưu thời gian gửi
     res.json({ message: 'OTP đã được gửi tới email!' });
   } catch (error) {
     console.error('❌ Lỗi gửi email:', error);
     res.status(500).json({ message: 'Không thể gửi email. Vui lòng thử lại sau.' });
-  }  
+  }
 });
+
 
 // Reset password bằng OTP
 app.post('/reset-password', async (req, res) => {
