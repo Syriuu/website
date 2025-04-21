@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Sharing Map</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin="" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+
+    <link rel="stylesheet" href="../css/map.css">
+
+</head>
+
+<body>
+
+    <div class="app-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="menu-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <h2>Friends</h2>
+            </div>
+            <div class="avatar-list" id="avatarList">
+                </div>
+            <div class="sidebar-footer">
+                <button class="add-friend-btn">+ Add Friend</button>
+                <button id="addRandomMarkerBtn" class="add-friend-btn" style="margin-top: 10px;">Add Random Point</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="map-container" id="map-container">
+                <p id="location">Initializing Map...</p>
+                <div id="cusmap-holder"></div>
+            </div>
+        </div>
+    </div> <div class="popup" id="avatarPicker">
+        <div class="popup-content">
+            <h3>Choose Your Avatar</h3>
+            <div class="emoji-grid">
+                <span>😀</span> <span>😊</span> <span>😎</span> <span>🥳</span> <span>👽</span>
+                <span>🐶</span> <span>🐱</span> <span>🐭</span> <span>🐹</span> <span>🐰</span>
+                <span>🦊</span> <span>🐻</span> <span>🐼</span> <span>🐻‍❄️</span> <span>🐨</span>
+                <span>🐯</span> <span>🦁</span> <span>🐮</span> <span>🐷</span> <span>🐸</span>
+                <span>🐒</span> <span>🐔</span> <span>🐧</span> <span>🐦</span> <span>🐤</span>
+                <span>🦄</span> <span>🐴</span> <span>🐗</span> <span>🐺</span> <span>🦋</span>
+                <span>🚀</span> <span>🛸</span> <span>💡</span> <span>🚲</span> <span>🚗</span>
+                 <span>🏆</span> <span>🎮</span> <span>🌍</span> <span>🌟</span> <span>📍</span>
+            </div>
+            <button class="close-btn">Close</button>
+        </div>
+    </div>
+    <div class="popup" id="friendPopup">
+        <div class="popup-content">
+            <h3>Add Friend</h3>
+            <input type="text" id="friendName" placeholder="Enter friend's name">
+            <div class="popup-buttons">
+                <button class="add-btn">Add</button>
+                <button class="cancel-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+
+    <script src="../js/map.js"></script>
+
+</body>
+</html>

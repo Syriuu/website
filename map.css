@@ -1,0 +1,353 @@
+/* css/map.css */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  height: 100vh;
+  overflow: hidden; /* Keep this to prevent body scrollbars */
+}
+
+.app-container {
+  display: flex;
+  height: 100vh; /* Changed from 100% to 100vh for consistency */
+}
+
+/* Sidebar Styles */
+.sidebar {
+  width: 250px;
+  background-color: #2c3e50;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+  z-index: 1100; /* Above map and popups maybe? */
+}
+
+.sidebar-header {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-header h2 {
+  font-size: 1.2rem;
+}
+
+.menu-toggle {
+  width: 25px;
+  height: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.menu-toggle span {
+  display: block;
+  width: 100%;
+  height: 3px;
+  background-color: white;
+  transition: all 0.3s ease;
+}
+
+/* Active state for toggle animation (optional) */
+.menu-toggle.active span:nth-child(1) {
+    transform: rotate(45deg) translate(5px, 5px);
+}
+.menu-toggle.active span:nth-child(2) {
+    opacity: 0;
+}
+.menu-toggle.active span:nth-child(3) {
+    transform: rotate(-45deg) translate(7px, -6px);
+}
+
+
+.avatar-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.avatar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.avatar-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.avatar-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0; /* Prevent circle from shrinking */
+}
+
+.avatar-name {
+  font-size: 0.9rem;
+  white-space: nowrap; /* Prevent name wrapping */
+  overflow: hidden; /* Hide overflow */
+  text-overflow: ellipsis; /* Add ... for long names */
+}
+
+.sidebar-footer {
+  padding: 15px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.add-friend-btn {
+  width: 100%;
+  padding: 10px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.add-friend-btn:hover {
+  background-color: #2980b9;
+}
+
+/* Main Content Styles */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.map-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative; /* Needed for #location positioning */
+}
+
+#location {
+  padding: 8px 15px; /* Slightly smaller padding */
+  background-color: rgba(248, 249, 250, 0.9); /* Slightly transparent */
+  border-bottom: 1px solid #dee2e6;
+  flex-shrink: 0; /* Prevent shrinking */
+  z-index: 401; /* Above map but below sidebar potentially */
+  position: relative; /* Needed for z-index */
+  font-size: 0.85rem;
+  text-align: center;
+  color: #333;
+}
+
+#cusmap-holder {
+  flex: 1; /* Take remaining space */
+  width: 100%;
+  background-color: #eee; /* Background while map loads */
+  z-index: 400; /* Below location bar */
+}
+
+/* Player Marker Styles */
+.player-marker {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px; /* Emoji size */
+  line-height: 1; /* Adjust for vertical centering */
+  overflow: hidden;
+  /* Background color set dynamically or via more specific class */
+}
+
+/* Destination Marker Style (Optional - Use if you want different background) */
+.destination-marker {
+   width: 48px;
+   height: 48px;
+   background-color: #3498db; /* Example blue background */
+   border-radius: 50%;
+   border: 2px solid white;
+   box-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   font-size: 32px;
+   line-height: 1;
+   overflow: hidden;
+}
+
+/* Popup Styles */
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6); /* Darker background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; /* Above most things */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.popup.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.popup-content {
+  background-color: white;
+  padding: 25px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  transform: scale(0.95); /* Start slightly smaller */
+  transition: transform 0.3s ease;
+}
+
+.popup.active .popup-content {
+    transform: scale(1); /* Scale to normal size when active */
+}
+
+.popup h3 {
+  margin-top: 0; /* Remove default margin */
+  margin-bottom: 20px;
+  color: #2c3e50;
+  text-align: center;
+  font-weight: 600;
+}
+
+.emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); /* Responsive columns */
+  gap: 10px;
+  margin-bottom: 25px;
+  max-height: 250px; /* Limit height and allow scroll */
+  overflow-y: auto; /* Add scroll if needed */
+  padding: 5px; /* Padding inside scroll area */
+}
+
+.emoji-grid span {
+  font-size: 26px; /* Slightly larger emojis */
+  text-align: center;
+  padding: 8px; /* Adjust padding */
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.2s, transform 0.1s ease;
+}
+
+.emoji-grid span:hover {
+  background-color: #f0f0f0;
+  transform: scale(1.1); /* Slightly enlarge on hover */
+}
+
+.popup input {
+  width: 100%;
+  padding: 12px; /* More padding */
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+.popup-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px; /* Add space above buttons */
+}
+
+.popup button {
+  flex: 1;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s, box-shadow 0.2s;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.popup button:hover {
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.popup button.add-btn {
+  background-color: #3498db;
+  color: white;
+}
+
+.popup button.add-btn:hover {
+  background-color: #2980b9;
+}
+
+.popup button.cancel-btn,
+.popup button.close-btn {
+  background-color: #ecf0f1; /* Lighter gray */
+  color: #34495e; /* Darker text */
+}
+
+.popup button.cancel-btn:hover,
+.popup button.close-btn:hover {
+  background-color: #dadedf;
+}
+
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .sidebar {
+      position: fixed; /* Change to fixed */
+      left: -250px; /* Start off-screen */
+      height: 100vh; /* Full height */
+      z-index: 1100; /* Above other elements when open */
+      box-shadow: 5px 0 15px rgba(0,0,0,0.2); /* Add shadow for depth */
+  }
+
+  .sidebar.active {
+      left: 0; /* Slide in */
+  }
+}
+
+/* Leaflet specific overrides if needed */
+.leaflet-container {
+    background: #f0f0f0; /* Map background */
+    height: 100%; /* Crucial for map display */
+    width: 100%;
+    cursor: default; /* Default cursor for map */
+}
+.leaflet-marker-icon {
+    cursor: pointer; /* Pointer cursor for markers */
+}
+
+/* Style for routing machine (optional) */
+.leaflet-routing-container {
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 5px;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.2);
+}
+/* Hide default start/end icons from routing machine if needed */
+.leaflet-routing-icon {
+    display: none !important;
+}
