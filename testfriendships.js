@@ -1,7 +1,7 @@
 const axios = require('axios');
 
 // ⚡ URL API server của bạn
-const BASE_URL = 'http://localhost:8000/friendship';
+const BASE_URL = 'http://localhost:8000/api/friends';
 
 // ⚡ ID mẫu — thay bằng ID user thật của bạn
 const requesterId = '67f16df4f4fd25c41910d30c';

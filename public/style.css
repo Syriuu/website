@@ -1,17 +1,3 @@
-body {
-    font-family: Arial, sans-serif;
-    text-align: center;
-    background: linear-gradient(to bottom, #c9a7e8, #8c52ff);
-    color: black;
-    height: 100vh;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    position: relative;
-}
-
 .container {
     width: 350px;
     background: rgba(255, 255, 255, 0.3);
@@ -21,21 +7,21 @@ body {
     backdrop-filter: blur(10px);
     position: relative;
     z-index: 1;
-}
-
-h2 {
+  }
+  
+  h2 {
     margin-bottom: 10px;
     color: #4b0082;
     font-size: 28px;
-}
-
-p.subtitle {
+  }
+  
+  p.subtitle {
     margin-bottom: 20px;
     color: #6a2bbf;
     font-size: 14px;
-}
-
-input {
+  }
+  
+  input {
     display: block;
     width: 90%;
     margin: 10px auto;
@@ -47,13 +33,13 @@ input {
     text-align: center;
     font-size: 16px;
     outline: none;
-}
-
-input::placeholder {
+  }
+  
+  input::placeholder {
     color: #8c52ff;
-}
-
-button {
+  }
+  
+  button {
     display: block;
     width: 95%;
     margin: 15px auto;
@@ -66,25 +52,24 @@ button {
     font-weight: bold;
     font-size: 16px;
     transition: background 0.3s;
-}
-
-button:hover {
+  }
+  
+  button:hover {
     background: #6a2bbf;
-}
-
-a {
+  }
+  
+  a {
     color: #4b0082;
     text-decoration: none;
     font-weight: bold;
     font-size: 14px;
-}
-
-a:hover {
+  }
+  
+  a:hover {
     text-decoration: underline;
-}
-
-/* Starry background */
-.stars {
+  }
+  
+  .stars {
     position: fixed;
     width: 100%;
     height: 100%;
@@ -92,27 +77,32 @@ a:hover {
     left: 0;
     pointer-events: none;
     z-index: 0;
-}
-
-.star {
+  }
+  
+  .star {
     position: absolute;
     background: white;
     width: 2px;
     height: 2px;
     animation: twinkle 3s infinite;
-}
-
-@keyframes twinkle {
+  }
+  
+  @keyframes twinkle {
     0% { opacity: 0.3; }
     50% { opacity: 1; }
     100% { opacity: 0.3; }
-}
-
-/* Form visibility */
-.form {
+  }
+  
+  .form {
     display: none;
-}
-
-.form.active {
+  }
+  
+  .form.active {
     display: block;
-}
+  }
+  
+  #message {
+    font-size: 14px;
+    margin-top: 10px;
+  }
+  
