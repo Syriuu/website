@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Location Sharing Map</title>
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css"
+  />
+
+  <style>
+    /* RESET & LAYOUT */
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
+    html,body { height:100%; overflow:hidden; }
+    .app-container { display:flex; height:100%; }
+
+    /* SIDEBAR */
+    .sidebar { width:250px; background:#2c3e50; color:#fff; display:flex; flex-direction:column; }
+    .sidebar-header { padding:15px; border-bottom:1px solid rgba(255,255,255,0.1); }
+    .sidebar-header h2 { margin:0; font-size:1.2rem; }
+    .avatar-list { flex:1; overflow-y:auto; padding:10px; }
+    .avatar-item { display:flex; align-items:center; gap:10px; padding:8px; border-radius:5px; cursor:pointer; }
+    .avatar-item:hover { background:rgba(255,255,255,0.1); }
+    .avatar-circle { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; }
+    .avatar-name { font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .sidebar-footer { padding:15px; border-top:1px solid rgba(255,255,255,0.1); }
+    .add-friend-btn { width:100%; margin-top:5px; padding:8px; background:#3498db; color:#fff; border:none; border-radius:5px; cursor:pointer; }
+
+    /* MAIN & MAP */
+    .main-content { flex:1; display:flex; flex-direction:column; }
+    .map-container { flex:1; position:relative; display:flex; flex-direction:column; }
+    #location { padding:8px; background:rgba(248,249,250,0.9); text-align:center; z-index:400; }
+    #cusmap-holder { flex:1; width:100%; height:100%; }
+
+    /* MARKERS */
+    .player-marker, .destination-marker {
+      width:48px; height:48px; border-radius:50%; border:2px solid #fff;
+      box-shadow:0 1px 8px rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; font-size:32px;
+      /* Anchor point adjustment for centering */
+      /* iconAnchor: [24, 24] is set in JS */
+    }
+
+    /* POPUPS */
+    .popup { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6);
+      display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .3s; z-index: 1001; }
+    .popup.active { opacity:1; pointer-events:all; }
+    .popup-content { background:#fff; padding:20px; border-radius:8px; width:90%; max-width:350px; color: #333; }
+    .popup-content h3 { margin-bottom: 15px; }
+    .emoji-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 10px; margin-bottom: 15px; }
+    .emoji-grid span { cursor: pointer; font-size: 24px; text-align: center; padding: 5px; border-radius: 4px; }
+    .emoji-grid span:hover { background-color: #eee; }
+
+    /* Ensure Leaflet controls don't overlap badly */
+    .leaflet-routing-container { z-index: 1000; }
+
+    /* Close button for instructions */
+    .close-instructions-btn {
+      position:absolute; top:4px; right:4px; background:rgba(255,255,255,0.8); border:none;
+      font-size:1rem; cursor:pointer; z-index:1001; /* Ensure it's above routing panel content */
+      padding: 2px 6px; border-radius: 3px; line-height: 1;
+    }
+    .close-instructions-btn:hover { background:rgba(230,230,230,0.9); }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h2>Friends</h2>
+      </div>
+      <div class="avatar-list" id="avatarList"></div>
+      <div class="sidebar-footer">
+        <button class="add-friend-btn" id="addFriendBtn">+ Add Friend</button>
+        <button class="add-friend-btn" id="addRandomMarkerBtn">Add Random Point</button>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="map-container">
+        <p id="location">Initializing map...</p>
+        <div id="cusmap-holder"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="popup" id="avatarPicker">
+    <div class="popup-content">
+      <h3>Choose Your Avatar</h3>
+      <div class="emoji-grid" id="emojiGrid">
+        <span>😀</span><span>😊</span><span>😎</span><span>🥳</span><span>👽</span>
+        <span>🐶</span><span>🐱</span><span>🐻</span><span>🐼</span><span>🦊</span>
+        <span>🚗</span><span>✈️</span><span>🚀</span><span>⛵️</span><span>🚲</span><span>🏍️</span>
+      </div>
+      <button class="add-friend-btn close-btn" id="closeAvatarBtn" style="background:#aaa;">Close</button>
+    </div>
+  </div>
+
+  <div class="popup" id="friendPopup">
+    <div class="popup-content">
+      <h3>Add Friend</h3>
+      <input type="text" id="friendName" placeholder="Friend's name" style="width:100%;padding:8px;margin-bottom:12px;border:1px solid #ccc;border-radius:4px;" />
+      <button class="add-friend-btn" id="confirmAddFriend">Add</button>
+      <button class="add-friend-btn close-btn" id="cancelAddFriend" style="background:#aaa;margin-top:6px;">Cancel</button>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+
+  <script>
+  (function(){
+    "use strict";
+
+    //── CONFIG ────────────────────────────────────────────
+    const CENTER=[10.7769, 106.7009], ZOOM=13; // HCMC Center
+    const GEO_OPTS={enableHighAccuracy:true,timeout:10000,maximumAge:60000};
+    const UPDATE_INTERVAL=15000, RANDOM_RADIUS=0.05; // Approx 5.5km
+
+    //── STATE ─────────────────────────────────────────────
+    let map, userMarker, routingControl, instructionsPanel;
+    let state = { currentUser:'You', avatars:{ You:'😀' }, friends:[] };
+
+    //── ICONS ─────────────────────────────────────────────
+    // Use function to create icons dynamically based on current avatar
+     const createUserIcon = () => L.divIcon({
+         className: 'player-marker',
+         html: state.avatars[state.currentUser] || '😀', // Use current avatar or default
+         iconSize: [48, 48],
+         iconAnchor: [24, 24] // Center the icon anchor
+     });
+    const destIcon = e=>L.divIcon({ className:'destination-marker', html:e, iconSize:[48,48], iconAnchor:[24,24] });
+    const randIcon = L.divIcon({ className:'player-marker', html:'🎯', iconSize:[48,48], iconAnchor:[24,24] }); // Can use destination-marker class too
+
+    //── DOM REFS ─────────────────────────────────────────
+    const locationEl = document.getElementById('location');
+    const avatarList = document.getElementById('avatarList');
+    const addFriendBtn = document.getElementById('addFriendBtn');
+    const addRandomBtn = document.getElementById('addRandomMarkerBtn');
+    const avatarPicker = document.getElementById('avatarPicker');
+    const friendPopup  = document.getElementById('friendPopup');
+
+    //─ INIT ──────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+      loadUserData();
+      renderAvatars();
+      setupSidebars(); // Renamed from original for clarity, keeps original functionality
+      initMap();
+      startGeolocation();
+    });
+
+    //── SIDEBAR & AVATAR HANDLERS ────────────────────────
+    function setupSidebars(){
+      // Add Friend button
+      addFriendBtn.onclick = ()=> togglePopup(friendPopup,true);
+      document.getElementById('cancelAddFriend').onclick = ()=>togglePopup(friendPopup,false);
+      document.getElementById('confirmAddFriend').onclick = addFriend;
+
+      // Add Random Point Button Activation
+      addRandomBtn.onclick = addRandom; // Connect the button click to the function
+
+      // Avatar picker
+      document.querySelector('#closeAvatarBtn').onclick = ()=>togglePopup(avatarPicker,false);
+
+
+      // Emoji clicks - Update state, user marker, save, render, close picker
+      document.querySelectorAll('#emojiGrid span').forEach(s=>{
+        s.onclick = ()=>{
+          state.avatars[state.currentUser] = s.textContent;
+          if(userMarker) {
+              // Update the user marker icon immediately using the function
+              userMarker.setIcon(createUserIcon());
+          }
+          saveUserData();
+          renderAvatars();
+          togglePopup(avatarPicker,false);
+        };
+      });
+
+      // Clicking your avatar opens picker
+      avatarList.onclick = e=>{
+        const item = e.target.closest('.avatar-item');
+        // Only open picker if it's the user's own avatar item
+        if(item && item.dataset.isYou === 'true') {
+            togglePopup(avatarPicker,true);
+        }
+      };
+    }
+
+    function togglePopup(el, show){
+      el.classList[ show ? 'add':'remove' ]('active');
+    }
+
+    function renderAvatars(){
+      avatarList.innerHTML='';
+      // Render current user
+      renderAvatarItem(state.currentUser,true);
+      // Render friends
+      state.friends.forEach(f=>renderAvatarItem(f,false));
+    }
+
+    function renderAvatarItem(name,isYou){
+      const div = document.createElement('div');
+      div.className='avatar-item';
+      // Use dataset attribute to easily identify the user's item
+      div.dataset.isYou = isYou ? 'true' : 'false';
+      div.dataset.name = name; // Store name for potential future interactions
+
+      div.innerHTML=`
+        <div class="avatar-circle" style="background:${hashColor(name)}">
+          ${state.avatars[name] || '❓'}
+        </div>
+        <div class="avatar-name">${name}${isYou ? ' (You)' : ''}</div>
+      `;
+      avatarList.appendChild(div);
+    }
+
+    function addFriend(){
+      const inp = document.getElementById('friendName');
+      const name = inp.value.trim();
+      if(!name) { // Basic validation: ensure name is not empty
+          alert("Friend's name cannot be empty.");
+          inp.focus();
+          return;
+      }
+       if (name === state.currentUser) { // Prevent adding self
+          alert("You cannot add yourself as a friend.");
+          inp.focus();
+          return;
+      }
+       if (state.friends.includes(name)) { // Prevent duplicates
+          alert(`"${name}" is already in your friend list.`);
+          inp.focus();
+          return;
+       }
+
+      state.friends.push(name);
+      state.avatars[name] = '😀'; // Assign a default avatar
+      inp.value = ''; // Clear input field
+      saveUserData();
+      renderAvatars();
+      togglePopup(friendPopup,false);
+    }
+
+    // Simple hash function for consistent background colors
+    function hashColor(s){
+      let h=0; for(let c of s) h=c.charCodeAt(0)+((h<<5)-h);
+      const cols=['#e57373','#f06292','#ba68c8','#9575cd','#7986cb','#64b5f6','#4fc3f7','#4dd0e1','#4db6ac','#81c784', '#aed581', '#ffb74d', '#ff8a65', '#a1887f', '#90a4ae'];
+      return cols[Math.abs(h) % cols.length];
+    }
+
+    // Save user avatars and friends list to local storage
+    function saveUserData(){
+      try {
+          localStorage.setItem('map_avatars', JSON.stringify(state.avatars));
+          localStorage.setItem('map_friends', JSON.stringify(state.friends));
+      } catch (e) {
+          console.error("Could not save data to localStorage", e);
+          // Optionally inform the user data couldn't be saved
+      }
+    }
+
+    // Load data from local storage on startup
+    function loadUserData(){
+       try {
+            const storedAvatars = localStorage.getItem('map_avatars');
+            const storedFriends = localStorage.getItem('map_friends');
+
+            if (storedAvatars) {
+                state.avatars = JSON.parse(storedAvatars);
+                // Ensure 'You' avatar exists, provide default if missing
+                if (!state.avatars['You']) {
+                    state.avatars['You'] = '😀';
+                }
+            } else {
+                state.avatars = { You: '😀' }; // Default if nothing stored
+            }
+
+            if (storedFriends) {
+                state.friends = JSON.parse(storedFriends);
+            } else {
+                state.friends = []; // Default empty list
+            }
+
+       } catch(e) {
+            console.error("Could not load data from localStorage", e);
+            // Fallback to defaults if parsing fails or storage is corrupt
+            state.avatars = { You: '😀' };
+            state.friends = [];
+       }
+    }
+
+    //── MAP & ROUTING ────────────────────────────────────
+    function initMap(){
+      map = L.map('cusmap-holder').setView(CENTER,ZOOM);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:19,minZoom:3, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'}).addTo(map);
+
+      // Add example Points of Interest
+      addPoi([10.7716,106.7046],'🏢','Bitexco Financial Tower'); // Near original center
+      addPoi([10.7797,106.6991],'⛪','Notre Dame Cathedral'); // Near original center
+      addPoi([11.1446, 106.5986], '🏭', 'My Phuoc Industrial Park'); // Near Ben Cat
+
+      // Initialize Routing Control
+      routingControl = L.Routing.control({
+        waypoints:[],
+        routeWhileDragging:false,
+        addWaypoints:false,
+        draggableWaypoints:false,
+        show:false, // Hide instructions initially
+        position:'topright',
+        fitSelectedRoutes: false, // We will fit manually
+        createMarker:()=>null, // Use our own markers
+        lineOptions:{styles:[{color:'#ff8c00',opacity:0.8,weight:6}]}
+      }).addTo(map);
+
+      // Get the instructions container and add a close button
+      instructionsPanel = routingControl.getContainer();
+      if (instructionsPanel) { // Check if container exists
+            const closeBtn = L.DomUtil.create('button','close-instructions-btn', instructionsPanel);
+            closeBtn.innerHTML = '&times;'; // Use '×' symbol for close
+            closeBtn.setAttribute('title', 'Close directions');
+            closeBtn.onclick= (e) => {
+                L.DomEvent.stop(e); // Prevent map click
+                routingControl.hide();
+                routingControl.setWaypoints([]); // Clear the route as well
+            };
+      }
+
+      // Handle map clicks - hide routing panel and clear route
+      map.on('click',()=>{
+        if (routingControl && routingControl.getWaypoints().length > 0) { // Only hide if route is shown
+             routingControl.hide();
+             routingControl.setWaypoints([]);
+             map.closePopup(); // Close any open popups
+        }
+      });
+    }
+
+    // Function to add a POI marker
+    function addPoi(latlng, emoji, title){
+      const marker = L.marker(latlng,{icon:destIcon(emoji),title})
+        .addTo(map)
+        .on('click', e => {
+             L.DomEvent.stopPropagation(e); // Prevent map click through marker
+             routeTo(e.target); // Call the routing function for this marker
+        });
+        // Optional: Store marker reference if needed later
+        // state.markers[title] = marker;
+    }
+
+    // Start geolocation updates
+    function startGeolocation(){
+      if (!navigator.geolocation) {
+           locationEl.innerText = 'Geolocation is not supported by your browser.';
+           return;
+      }
+      locationEl.innerText = 'Getting your location...';
+      // Initial call
+      updateLocation();
+      // Set interval for updates
+      setInterval(updateLocation, UPDATE_INTERVAL);
+    }
+
+    // Get current position and update marker/location text
+    function updateLocation(){
+      navigator.geolocation.getCurrentPosition(
+        async pos => { // Success callback
+            const loc = L.latLng(pos.coords.latitude, pos.coords.longitude);
+            // Set map view only if user marker doesn't exist yet (first fix)
+            if(!userMarker) {
+                map.setView(loc, 16); // Zoom in closer on first fix
+            }
+            // Place or update the user marker
+            await placeUser(loc);
+
+            // If a route is active, update its starting point
+            if (routingControl && routingControl.getWaypoints().length > 1) {
+                routingControl.spliceWaypoints(0, 1, loc);
+            }
+
+        },
+        err => { // Error callback
+            locationEl.innerText = 'Error getting location: '+ err.message;
+            console.warn(`Geolocation Error (${err.code}): ${err.message}`);
+        },
+        GEO_OPTS // Geolocation options
+       );
+    }
+
+    // Place or update the user marker on the map
+    async function placeUser(loc){
+        let addr = 'Fetching address...'; // Placeholder
+        try {
+             // Fetch address using reverse geocoding
+             addr = await revGeo(loc);
+        } catch (error) {
+             console.warn("Reverse geocoding failed:", error);
+             // Fallback to coordinates if geocoding fails
+             addr = `${loc.lat.toFixed(5)}, ${loc.lng.toFixed(5)}`;
+        }
+
+        const popupContent = `<b>You are here!</b><br>${addr}`;
+
+        if (!userMarker) {
+            // Create marker if it doesn't exist
+            userMarker = L.marker(loc, {
+                icon: createUserIcon(), // Use dynamic icon creation
+                draggable: false // Typically user marker is not draggable
+            })
+            .addTo(map)
+            .bindPopup(popupContent);
+        } else {
+            // Update existing marker's position and popup
+            userMarker.setLatLng(loc);
+            userMarker.setIcon(createUserIcon()); // Ensure icon reflects current avatar
+            userMarker.setPopupContent(popupContent);
+        }
+        locationEl.innerText = `Your Location: ${addr}`; // Update the location bar
+    }
+
+    // Reverse Geocode function using Nominatim
+    async function revGeo({lat,lng}){
+        const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&accept-language=en`;
+        const response = await fetch(url);
+        if (!response.ok) {
+             throw new Error(`Nominatim request failed: ${response.statusText}`);
+        }
+        const data = await response.json();
+         if (data && data.display_name) {
+            return data.display_name;
+         } else {
+            throw new Error("Could not find address in Nominatim response.");
+         }
+    }
+
+    // *** THIS IS THE UPDATED routeTo FUNCTION ***
+    async function routeTo(marker){
+      // Ensure user location is available
+      if (!userMarker || !userMarker.getLatLng()) {
+        alert('Waiting for your location to calculate the route...');
+        return;
+      }
+      const u = userMarker.getLatLng(); // User's current location
+      const d = marker.getLatLng();     // Destination marker's location
+
+      // 1. Set waypoints for the route calculation (User -> Destination)
+      routingControl.setWaypoints([u, d]);
+
+      // 2. Show the instructions panel immediately
+      routingControl.show();
+
+      // 3. Fit map view to the route bounds (User to Destination)
+      //    This happens before the route is fully calculated, giving an immediate view adjustment.
+      //    We add padding to ensure markers aren't right at the edge.
+      map.fitBounds(L.latLngBounds(u, d), { padding: [60, 60], maxZoom: 17 });
+
+      // 4. Get destination details for the popup (address, name, icon)
+      let addr = `${d.lat.toFixed(5)}, ${d.lng.toFixed(5)}`; // Fallback address
+      try {
+          addr = await revGeo(d);
+      } catch (error) {
+          console.warn("Reverse geocoding for destination failed:", error);
+          // Keep the fallback address (coordinates)
+      }
+
+      const avatar = marker.options.icon.options.html; // Get emoji/HTML from marker's icon
+      const name = marker.options.title || 'Destination'; // Get title from marker options
+      const dist = (u.distanceTo(d) / 1000).toFixed(2); // Calculate straight-line distance in km
+
+      // 5. Prepare and show the popup content on the destination marker
+      const popupContent = `
+        <div style="min-width: 180px;"> <table style="width:100%; border-collapse:collapse; margin-bottom:8px;">
+            <tr>
+              <td style="text-align:center; font-size:1.5rem; padding-right: 10px; vertical-align: top;">${avatar}</td>
+              <td style="font-weight:600; vertical-align: top;">${name}</td>
+            </tr>
+            <tr>
+              <td colspan="2" style="font-size:0.85rem; color:#555; padding-top: 4px;">${addr}</td>
+            </tr>
+          </table>
+          <div style="text-align:center; font-size:0.9rem; margin-bottom:6px;">Distance (approx): <strong>${dist} km</strong></div>
+          <div style="font-size: 0.8rem; color: #888; text-align: center;">Route calculating...</div>
+        </div>
+      `;
+
+      // Bind and open the popup on the *destination* marker
+      // Unbind first to prevent multiple popups if clicked quickly
+      marker.unbindPopup();
+      marker.bindPopup(popupContent).openPopup();
+
+      // Optional: You could listen for the 'routesfound' event on routingControl
+      // here to update the popup with actual route distance/time once calculated.
+       routingControl.on('routesfound', function updatePopupWithRouteInfo(e) {
+           if (e.routes && e.routes.length > 0) {
+               const route = e.routes[0];
+               const actualDist = (route.summary.totalDistance / 1000).toFixed(2);
+               const actualTime = Math.round(route.summary.totalTime / 60);
+
+                const updatedPopupContent = `
+                    <div style="min-width: 180px;">
+                      <table style="width:100%; border-collapse:collapse; margin-bottom:8px;">
+                        <tr>
+                          <td style="text-align:center; font-size:1.5rem; padding-right: 10px; vertical-align: top;">${avatar}</td>
+                          <td style="font-weight:600; vertical-align: top;">${name}</td>
+                        </tr>
+                        <tr>
+                          <td colspan="2" style="font-size:0.85rem; color:#555; padding-top: 4px;">${addr}</td>
+                        </tr>
+                      </table>
+                      <div style="text-align:center; font-size:0.9rem; margin-bottom:6px;">Route Distance: <strong>${actualDist} km</strong></div>
+                      <div style="text-align:center; font-size:0.9rem; margin-bottom:6px;">Est. Time: <strong>${actualTime} min</strong></div>
+                    </div>`;
+
+                // Check if the popup is still open for this marker before updating
+                if (marker.isPopupOpen()) {
+                    marker.setPopupContent(updatedPopupContent);
+                }
+           }
+           // Remove this listener after it runs once for this specific route request
+           routingControl.off('routesfound', updatePopupWithRouteInfo);
+       });
+
+         routingControl.on('routingerror', function handleRouteError(e) {
+             console.error("Routing Error:", e.error);
+             if (marker.isPopupOpen()) {
+                 marker.getPopup().setContent(marker.getPopup().getContent() + '<br><span style="color:red;font-size:0.8rem;">Could not find route.</span>');
+             }
+             routingControl.off('routingerror', handleRouteError); // Remove listener
+         });
+
+    }
+    // *** END OF UPDATED routeTo FUNCTION ***
+
+
+    // Function to add a random marker near the user
+    function addRandom(){
+      if(!userMarker || !userMarker.getLatLng()) { // Check if user location is known
+           return alert('Wait for your location to be found before adding random points.');
+      }
+      const u = userMarker.getLatLng();
+      const rLatLng = randomPoint(u, RANDOM_RADIUS); // Generate random LatLng
+
+      // Create marker with random icon and add click listener to route to it
+      L.marker(rLatLng, {icon: randIcon, title: "Random Point"})
+           .addTo(map)
+           .on('click', e => {
+                L.DomEvent.stopPropagation(e); // Prevent map click
+                routeTo(e.target); // Route to this random marker
+            });
+        map.panTo(rLatLng); // Optionally pan to the new random point
+    }
+
+    // Helper function to generate a random point within a radius (approximate)
+    function randomPoint({lat, lng}, radiusInDegrees){
+        const r = radiusInDegrees * Math.sqrt(Math.random()); // Distance (sqrt for uniform distribution)
+        const theta = 2 * Math.PI * Math.random();         // Random angle
+
+        // Calculate new latitude (simple approximation)
+        const newLat = lat + r * Math.cos(theta);
+        // Calculate new longitude (adjusting for latitude projection)
+        const newLng = lng + (r * Math.sin(theta)) / Math.cos(lat * Math.PI / 180);
+
+        return L.latLng(newLat, newLng);
+    }
+
+  })(); // End of IIFE wrapper
+  </script>
+</body>
+</html>
